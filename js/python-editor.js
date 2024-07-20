@@ -1,6 +1,8 @@
 let pyodide;
 let editor;
 let editorInitialized = false;
+let retryCount = 0;
+const maxRetries = 2; // Número máximo de tentativas
 
 async function loadPyodideAndPlugins() {
     pyodide = await loadPyodide();
@@ -22,7 +24,10 @@ async function runPython() {
     await pyodideReadyPromise;
     try {
         let code = editor.getValue();
-        
+
+        // Simular função input em Python usando prompt do JavaScript
+        code = code.replace(/input\s*\(\s*['"]([^'"]*)['"]\s*\)/g, "js_prompt('$1')");
+
         // Capturar stdout e stderr
         pyodide.runPython(`
             import sys
@@ -30,14 +35,21 @@ async function runPython() {
             sys.stdout = io.StringIO()
             sys.stderr = io.StringIO()
         `);
-        
+
+        // Adicionar a função js_prompt em Python
+        pyodide.runPython(`
+            from js import prompt
+            def js_prompt(message):
+                return prompt(message)
+        `);
+
         // Executar o código do usuário
         await pyodide.runPythonAsync(code);
-        
+
         // Capturar a saída
         let stdout = pyodide.runPython("sys.stdout.getvalue()");
         let stderr = pyodide.runPython("sys.stderr.getvalue()");
-        
+
         // Verificar se há um gráfico
         let plt_data = pyodide.runPython(`
             buf = io.BytesIO()
@@ -45,14 +57,14 @@ async function runPython() {
             buf.seek(0)
             base64.b64encode(buf.getvalue()).decode('utf-8')
         `);
-        
+
         // Limpar o plot atual para o próximo uso
         pyodide.runPython("plt.clf()");
-        
+
         // Restaurar stdout e stderr
         pyodide.runPython("sys.stdout = sys.__stdout__")
         pyodide.runPython("sys.stderr = sys.__stderr__")
-        
+
         showOutput(stdout, stderr, plt_data);
     } catch (err) {
         showOutput('', err.toString(), null);
@@ -108,7 +120,27 @@ function initPythonEditor() {
     require(['vs/editor/editor.main'], function() {
         if (!editorInitialized) {
             editor = monaco.editor.create(editorContainer, {
-                value: '# Seu código Python aqui\nprint("Olá, mundo!")',
+                value: `# Código de exemplo para criar um gráfico com Matplotlib e exibir uma equação com LaTeX na legenda
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Dados de exemplo
+x = np.linspace(0, 10, 100)
+y = np.sin(x)
+
+plt.plot(x, y, label=r'$y = \sin(x)$')
+
+# Adicionando legenda com LaTeX
+plt.legend()
+
+# Título e rótulos dos eixos
+plt.title('Gráfico de exemplo')
+plt.xlabel('x')
+plt.ylabel('y')
+
+# Exibir gráfico
+plt.show()
+`,
                 language: 'python',
                 theme: 'vs-dark',
                 minimap: { enabled: false }
@@ -119,9 +151,20 @@ function initPythonEditor() {
                 runButton.addEventListener('click', runPython);
             }
 
-            const closeButton = document.getElementById('close-output');
+            const fullscreenButton = document.getElementById('toggle-fullscreen');
+            const closeButton = document.getElementById('close-fullscreen');
+            const closeOutputButton = document.getElementById('close-output');
+
+            if (fullscreenButton) {
+                fullscreenButton.addEventListener('click', toggleFullScreen);
+            }
+
             if (closeButton) {
-                closeButton.addEventListener('click', function() {
+                closeButton.addEventListener('click', toggleFullScreen);
+            }
+
+            if (closeOutputButton) {
+                closeOutputButton.addEventListener('click', function() {
                     const outputWindow = document.getElementById('output-window');
                     if (outputWindow) {
                         outputWindow.style.display = 'none';
@@ -129,23 +172,48 @@ function initPythonEditor() {
                 });
             }
 
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && editorContainer.classList.contains('fullscreen')) {
+                    toggleFullScreen();
+                }
+            });
+
             editorInitialized = true;
             console.log('Editor initialized successfully');
         }
     });
 }
 
+function toggleFullScreen() {
+    const editorContainer = document.getElementById('editor-container');
+    const buttonsContainer = document.getElementById('buttons-container');
+    const closeButton = document.getElementById('close-fullscreen');
+
+    if (editorContainer.classList.contains('fullscreen')) {
+        editorContainer.classList.remove('fullscreen');
+        buttonsContainer.classList.remove('fullscreen');
+        closeButton.classList.remove('fullscreen');
+    } else {
+        editorContainer.classList.add('fullscreen');
+        buttonsContainer.classList.add('fullscreen');
+        closeButton.classList.add('fullscreen');
+    }
+}
+
 function checkAndInitEditor() {
     console.log('Checking for editor container...');
     const editorContainer = document.getElementById('editor-container');
-    console.log('Editor container found:', !!editorContainer);
-    console.log('Editor initialized:', editorInitialized);
     if (editorContainer && !editorInitialized) {
+        console.log('Editor container found:', !!editorContainer);
+        console.log('Editor initialized:', editorInitialized);
         console.log('Initializing editor...');
         initPythonEditor();
-    } else if (!editorInitialized) {
-        console.log('Retrying in 100ms...');
+    } else if (retryCount < maxRetries) {
+        retryCount++;
+        console.log('Editor container not found or already initialized. Retrying in 100ms...');
         setTimeout(checkAndInitEditor, 100);
+    } else {
+        console.error('Editor container not found after maximum retries. Initialization aborted.');
     }
 }
 

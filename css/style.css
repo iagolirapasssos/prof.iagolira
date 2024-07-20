@@ -20,16 +20,33 @@ header {
     padding: 1rem;
 }
 
-nav ul {
-    list-style-type: none;
-    padding: 0;
+.navbar {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    align-items: center;
 }
 
-nav ul li a {
+.navbar-menu {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 2rem;
+}
+
+.navbar-item {
+    position: relative;
+}
+
+.navbar-item a {
     color: var(--light-text);
     text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.navbar-item a:hover {
+    color: var(--text-color);
 }
 
 main {
@@ -52,7 +69,7 @@ h1, h2, h3 {
 }
 
 #editor-container {
-    height: 300px;
+    height: 450px;
     border: 1px solid var(--accent-color);
 }
 
@@ -74,6 +91,9 @@ footer {
     background-color: var(--secondary-color);
     text-align: center;
     padding: 1rem;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
 }
 
 .output-window {
@@ -85,7 +105,7 @@ footer {
     z-index: 1000;
     max-width: 80%;
     max-height: 80vh;
-    background-color: #f0f0f0;
+    background-color: #333; /* Fundo mais escuro para melhor contraste */
     border: 1px solid #ccc;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -97,8 +117,9 @@ footer {
     justify-content: space-between;
     align-items: center;
     padding: 5px 10px;
-    background-color: #e0e0e0;
+    background-color: #444; /* Fundo mais escuro para o cabeçalho */
     border-bottom: 1px solid #ccc;
+    color: #fff; /* Texto claro para contraste */
 }
 
 #output {
@@ -108,6 +129,7 @@ footer {
     max-height: 350px;
     white-space: pre-wrap;
     word-wrap: break-word;
+    color: #fff; /* Texto branco para melhor legibilidade */
 }
 
 #close-output {
@@ -115,4 +137,36 @@ footer {
     border: none;
     cursor: pointer;
     font-weight: bold;
+    color: #fff; /* Texto claro para o botão de fechar */
+}
+
+.service-banner {
+    background-color: var(--accent-color);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.service-banner h3 {
+    margin-top: 0;
+}
+
+.service-banner p {
+    margin: 1rem 0;
+}
+
+.service-banner button {
+    background-color: var(--text-color);
+    color: var(--light-text);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.service-banner button:hover {
+    background-color: var(--secondary-color);
 }

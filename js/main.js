@@ -28,11 +28,3 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load home page by default
     loadPage('home');
 });
-
-// Simple form submission (you'll need to implement the backend)
-document.addEventListener('submit', function(e) {
-    if (e.target.id === 'contact-form') {
-        e.preventDefault();
-        alert('Obrigado por entrar em contato! Esta é uma demonstração, então o formulário não será enviado.');
-    }
-});
