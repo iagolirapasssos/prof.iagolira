@@ -2,7 +2,7 @@ let pyodide;
 let editor;
 let editorInitialized = false;
 let retryCount = 0;
-const maxRetries = 2; // Número máximo de tentativas
+const maxRetries = 50; // Número máximo de tentativas
 
 async function loadPyodideAndPlugins() {
     pyodide = await loadPyodide();
@@ -154,6 +154,9 @@ plt.show()
             const fullscreenButton = document.getElementById('toggle-fullscreen');
             const closeButton = document.getElementById('close-fullscreen');
             const closeOutputButton = document.getElementById('close-output');
+            const saveButton = document.getElementById('save-code');
+            const importButton = document.getElementById('import-code-button');
+            const importInput = document.getElementById('import-code');
 
             if (fullscreenButton) {
                 fullscreenButton.addEventListener('click', toggleFullScreen);
@@ -163,11 +166,44 @@ plt.show()
                 closeButton.addEventListener('click', toggleFullScreen);
             }
 
-            if (closeOutputButton) {
+                        if (closeOutputButton) {
                 closeOutputButton.addEventListener('click', function() {
                     const outputWindow = document.getElementById('output-window');
                     if (outputWindow) {
                         outputWindow.style.display = 'none';
+                    }
+                });
+            }
+
+            if (saveButton) {
+                saveButton.addEventListener('click', function() {
+                    const code = editor.getValue();
+                    const blob = new Blob([code], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'code.py';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            }
+
+            if (importButton) {
+                importButton.addEventListener('click', function() {
+                    importInput.click();
+                });
+            }
+
+            if (importInput) {
+                importInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const code = e.target.result;
+                            editor.setValue(code);
+                        };
+                        reader.readAsText(file);
                     }
                 });
             }
