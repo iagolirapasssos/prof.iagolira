@@ -14,17 +14,30 @@ print_contents() {
     local dir="$1"
     local prefix="$2"
 
+    # Verifica se o diretório existe e não está vazio
+    if [ ! -d "$dir" ] || [ -z "$(ls -A "$dir")" ]; then
+        return
+    fi
+
     # Lista os conteúdos do diretório atual
     for entry in "$dir"/*; do
+        [ -e "$entry" ] || continue  # Pula se a entrada não existe
         local entry_name=$(basename "$entry")
-        if [ "$entry_name" != "$SCRIPT_NAME" ] && [ "$entry_name" != "$OUTPUT_FILE" ]; then
+        if [ "$entry_name" != "$SCRIPT_NAME" ] && 
+           [ "$entry_name" != "$OUTPUT_FILE" ] &&
+           [ "$entry_name" != "venv" ] &&
+           [ "$entry_name" != "images" ] &&
+           [ "$entry_name" != "LICENSE" ] &&
+           [ "$entry_name" != "README.md" ] &&
+           [ "$entry_name" != ".gitignore" ] &&
+           [[ "$entry_name" != *.sh ]]; then
             if [ -d "$entry" ]; then
                 # Se for um diretório, chama a função recursivamente
                 print_contents "$entry" "$prefix$entry_name/"
-            else
+            elif [ -f "$entry" ]; then
                 # Se for um arquivo, imprime o nome e o conteúdo
                 echo "$prefix$entry_name:" >> $OUTPUT_FILE
-                cat "$entry" >> $OUTPUT_FILE
+                cat "$entry" >> $OUTPUT_FILE 2>/dev/null
                 echo -e "\n" >> $OUTPUT_FILE
             fi
         fi
